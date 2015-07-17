@@ -10,10 +10,11 @@
 #import <objc/runtime.h>
 #import <objc/message.h>
 
-NSString *const kOOClassPrefix = @"OOClassPrefix_";
-NSString *const kOOAssociatedObservers = @"OOAssociatedObservers";
+static NSString *const kOOClassPrefix = @"OOClassPrefix_";
+static NSString *const kOOAssociatedObservers = @"OOAssociatedObservers";
 
-#pragma mark - OOInfo
+#pragma mark - OOInfo Class
+
 @interface OOInfo : NSObject
 
 @property(nonatomic,weak) NSObject *observer;
@@ -24,12 +25,12 @@ NSString *const kOOAssociatedObservers = @"OOAssociatedObservers";
 
 @implementation OOInfo
 
--(instancetype)initWithObserver:(NSObject *)observer Key:(NSString *)key block:(OOBlock)block{
+- (instancetype)initWithObserver:(NSObject *)observer Key:(NSString *)key block:(OOBlock)block {
     self = [super init];
     if (self) {
-        _observer = observer;
-        _key = key;
-        _block = block;
+        self.observer = observer;
+        self.key = key;
+        self.block = block;
     }
     return self;
 }
@@ -38,11 +39,13 @@ NSString *const kOOAssociatedObservers = @"OOAssociatedObservers";
 
 
 #pragma mark - Category
+
 @implementation NSObject (OO)
--(void)O_addObserver:(NSObject *)observer withBlock:(OOBlock)block{
+
+- (void)O_addObserver:(NSObject *)observer withBlock:(OOBlock)block {
     Class clazz = object_getClass(self);
 
-    unsigned int propertyNum = 0;
+    static unsigned int propertyNum = 0;
     objc_property_t *propertyList = class_copyPropertyList(clazz ,&propertyNum);
     NSAssert(propertyNum>0, @"Object hasn't property");
     NSMutableArray *observers = objc_getAssociatedObject(self, (__bridge const void *)(kOOAssociatedObservers));
@@ -75,14 +78,25 @@ NSString *const kOOAssociatedObservers = @"OOAssociatedObservers";
     }
 }
 
--(void)O_removeObserber:(NSObject *)observer{
-
-
+- (void)O_removeObserber:(NSObject *)observer {
+    NSMutableArray *observers = objc_getAssociatedObject(self, (__bridge const void *)(kOOAssociatedObservers));
+    unsigned long leftNum = 0;
+    while ([observers count]!=leftNum) {
+        leftNum = [observers count];
+        for (OOInfo *info in observers) {
+            if (info.observer == observer) {
+                [observers removeObject:info];
+                break;
+            }
+        }
+    }
+    
 }
 
 
 #pragma mark - Helper
--(Class)makeOOClassWithOriginalClassName:(NSString *)className{
+
+- (Class)makeOOClassWithOriginalClassName:(NSString *)className {
     NSString *OOClazzName = [kOOClassPrefix stringByAppendingString:className];
     Class clazz = NSClassFromString(OOClazzName);
     if (clazz) {
@@ -99,7 +113,7 @@ NSString *const kOOAssociatedObservers = @"OOAssociatedObservers";
     return OOClazz;
 }
 
--(BOOL)hasSelector:(SEL)setterSelector{
+- (BOOL)hasSelector:(SEL)setterSelector {
     Class clazz = object_getClass(self);
     unsigned int methodCount = 0;
     Method *methodList = class_copyMethodList(clazz, &methodCount);
@@ -114,8 +128,7 @@ NSString *const kOOAssociatedObservers = @"OOAssociatedObservers";
     return NO;
 }
 
--(NSString *)getterForSetter:(NSString *)setter
-{
+- (NSString *)getterForSetter:(NSString *)setter {
     if (setter.length <=0 || ![setter hasPrefix:@"set"] || ![setter hasSuffix:@":"]) {
         return nil;
     }
@@ -131,8 +144,7 @@ NSString *const kOOAssociatedObservers = @"OOAssociatedObservers";
 }
 
 
--(NSString *)setterForGetter:(NSString *)getter
-{
+- (NSString *)setterForGetter:(NSString *)getter {
     if (getter.length <= 0) {
         return nil;
     }
@@ -145,7 +157,8 @@ NSString *const kOOAssociatedObservers = @"OOAssociatedObservers";
 }
 
 #pragma mark - Overridden Methods
-static void oo_setter(id self,SEL _cmd,id newValue){
+
+static void oo_setter(id self,SEL _cmd,id newValue) {
     NSString *setterName = NSStringFromSelector(_cmd);
     NSString *getterName = [self getterForSetter:setterName];
     NSAssert(getterName, @"Object hasn't setter!");
@@ -168,7 +181,7 @@ static void oo_setter(id self,SEL _cmd,id newValue){
     }
     
 }
-static Class oo_class(id self ,SEL _cmd){
+static Class oo_class(id self ,SEL _cmd) {
     return class_getSuperclass(object_getClass(self));
 }
 

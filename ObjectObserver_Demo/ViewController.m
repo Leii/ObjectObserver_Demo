@@ -47,7 +47,7 @@
     [self.view addSubview:button];
 }
 
--(void)changeValues{
+-(void)changeValues {
     self.test.name = [self.test.name stringByAppendingString:@"i"];
     int num = arc4random()%12+1;
     self.test.number = [NSNumber numberWithInt:num];
