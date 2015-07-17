@@ -36,64 +36,6 @@ NSString *const kOOAssociatedObservers = @"OOAssociatedObservers";
 
 @end
 
-#pragma mark - Helpers
-static NSString * getterForSetter(NSString *setter)
-{
-    if (setter.length <=0 || ![setter hasPrefix:@"set"] || ![setter hasSuffix:@":"]) {
-        return nil;
-    }
-    
-    NSRange range = NSMakeRange(3, setter.length - 4);
-    NSString *getter = [setter substringWithRange:range];
-    
-    NSString *firstLetter = [[getter substringToIndex:1] lowercaseString];
-    getter = [getter stringByReplacingCharactersInRange:NSMakeRange(0, 1)
-                                       withString:firstLetter];
-    
-    return getter;
-}
-
-
-static NSString * setterForGetter(NSString *getter)
-{
-    if (getter.length <= 0) {
-        return nil;
-    }
-    NSString *firstLetter = [[getter substringToIndex:1] uppercaseString];
-    NSString *remainingString = [getter substringFromIndex:1];
-    
-    NSString *setter = [NSString stringWithFormat:@"set%@%@:", firstLetter, remainingString];
-    
-    return setter;
-}
-
-#pragma mark - Overridden Methods
-static void oo_setter(id self,SEL _cmd,id newValue){
-    NSString *setterName = NSStringFromSelector(_cmd);
-    NSString *getterName = getterForSetter(setterName);
-    NSAssert(getterName, @"Object hasn't setter!");
-    
-    id oldValue = [self valueForKey:getterName];
-    struct objc_super superclazz = {
-        .receiver = self,
-        .super_class = class_getSuperclass(object_getClass(self))
-    };
-    void (*objc_msgSendSuperCasted)(void *,SEL,id) = (void *)objc_msgSendSuper;
-    objc_msgSendSuperCasted(&superclazz,_cmd,newValue);
-    NSMutableArray *observers = objc_getAssociatedObject(self, (__bridge const void *)(kOOAssociatedObservers));
-    for (OOInfo *info in observers) {
-        if ([info.key isEqualToString:getterName]) {
-            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-                info.block(self,getterName,oldValue,newValue);
-            
-            });
-        }
-    }
-
-}
-static Class oo_class(id self ,SEL _cmd){
-    return class_getSuperclass(object_getClass(self));
-}
 
 #pragma mark - Category
 @implementation NSObject (OO)
@@ -119,7 +61,7 @@ static Class oo_class(id self ,SEL _cmd){
     for (int i =0; i<propertyNum; i++) {
         const char *propertyName = property_getName(propertyList[i]);
         NSString *key = [NSString stringWithUTF8String:propertyName];
-        SEL setterSelector = NSSelectorFromString(setterForGetter(key));
+        SEL setterSelector = NSSelectorFromString([self setterForGetter:key]);
         Method setterMethod = class_getInstanceMethod(clazz, setterSelector);
         NSAssert1(setterMethod, @"Object hasn't a setter for key%@", key);
         //add oo setter if this class doesn't implement the setter
@@ -137,6 +79,7 @@ static Class oo_class(id self ,SEL _cmd){
 
 
 }
+
 
 #pragma mark - Helper
 -(Class)makeOOClassWithOriginalClassName:(NSString *)className{
@@ -170,6 +113,65 @@ static Class oo_class(id self ,SEL _cmd){
     free(methodList);
     return NO;
 }
+
+-(NSString *)getterForSetter:(NSString *)setter
+{
+    if (setter.length <=0 || ![setter hasPrefix:@"set"] || ![setter hasSuffix:@":"]) {
+        return nil;
+    }
+    
+    NSRange range = NSMakeRange(3, setter.length - 4);
+    NSString *getter = [setter substringWithRange:range];
+    
+    NSString *firstLetter = [[getter substringToIndex:1] lowercaseString];
+    getter = [getter stringByReplacingCharactersInRange:NSMakeRange(0, 1)
+                                             withString:firstLetter];
+    
+    return getter;
+}
+
+
+-(NSString *)setterForGetter:(NSString *)getter
+{
+    if (getter.length <= 0) {
+        return nil;
+    }
+    NSString *firstLetter = [[getter substringToIndex:1] uppercaseString];
+    NSString *remainingString = [getter substringFromIndex:1];
+    
+    NSString *setter = [NSString stringWithFormat:@"set%@%@:", firstLetter, remainingString];
+    
+    return setter;
+}
+
+#pragma mark - Overridden Methods
+static void oo_setter(id self,SEL _cmd,id newValue){
+    NSString *setterName = NSStringFromSelector(_cmd);
+    NSString *getterName = [self getterForSetter:setterName];
+    NSAssert(getterName, @"Object hasn't setter!");
+    
+    id oldValue = [self valueForKey:getterName];
+    struct objc_super superclazz = {
+        .receiver = self,
+        .super_class = class_getSuperclass(object_getClass(self))
+    };
+    void (*objc_msgSendSuperCasted)(void *,SEL,id) = (void *)objc_msgSendSuper;
+    objc_msgSendSuperCasted(&superclazz,_cmd,newValue);
+    NSMutableArray *observers = objc_getAssociatedObject(self, (__bridge const void *)(kOOAssociatedObservers));
+    for (OOInfo *info in observers) {
+        if ([info.key isEqualToString:getterName]) {
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                info.block(self,getterName,oldValue,newValue);
+                
+            });
+        }
+    }
+    
+}
+static Class oo_class(id self ,SEL _cmd){
+    return class_getSuperclass(object_getClass(self));
+}
+
 
 
 @end
