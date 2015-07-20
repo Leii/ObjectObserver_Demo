@@ -9,20 +9,20 @@
 #import "ViewController.h"
 #import "NSObject+OO.h"
 
-@interface OOTest : NSObject
+@interface TestClass : NSObject
 
 @property(nonatomic)NSString *name;
 @property(nonatomic)NSNumber *number;
 
 @end
 
-@implementation OOTest
+@implementation TestClass
 
 @end
 
 @interface ViewController ()
 
-@property(nonatomic)OOTest *test;
+@property(nonatomic)TestClass *testObject;
 
 @end
 
@@ -31,26 +31,27 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    self.test = [[OOTest alloc] init];
-    self.test.name = @"Le";
-    self.test.number = [NSNumber numberWithInt:1];
+    self.testObject = [[TestClass alloc] init];
+    self.testObject.name = @"Le";
+    self.testObject.number = [NSNumber numberWithInt:1];
     
-    [self.test O_addObserver:self withBlock:^(id observedObject, NSString *observedKey, id oldValue, id newValue) {
+    [self.testObject O_addObserver:self withBlock:^(id observedObject, NSString *observedKey, id oldValue, id newValue) {
     NSLog(@"The property '%@' is changed from %@ to %@",observedKey,oldValue,newValue);
     }];
     
     UIButton * button = [UIButton buttonWithType:UIButtonTypeRoundedRect];
-    [button setFrame:CGRectMake(self.view.frame.size.width/2-60, self.view.frame.size.height/2, 120, 50)];
+    [button setFrame:CGRectMake(self.view.frame.size.width/2-60, self.view.frame.size.height/2-25, 120, 50)];
     [button setTitle:@"ChangeValues" forState:UIControlStateNormal];
     [button addTarget:self action:@selector(changeValues) forControlEvents:UIControlEventTouchUpInside];
     
     [self.view addSubview:button];
+    
 }
 
 -(void)changeValues {
-    self.test.name = [self.test.name stringByAppendingString:@"i"];
+    self.testObject.name = [self.testObject.name stringByAppendingString:@"i"];
     int num = arc4random()%12+1;
-    self.test.number = [NSNumber numberWithInt:num];
+    self.testObject.number = [NSNumber numberWithInt:num];
 }
 
 - (void)didReceiveMemoryWarning {
