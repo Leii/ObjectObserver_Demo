@@ -7,14 +7,14 @@
 	<key>IDESourceControlProjectIdentifier</key>
 	<string>48A466D2-A8DE-4F98-BEDF-74530C284804</string>
 	<key>IDESourceControlProjectName</key>
-	<string>project</string>
+	<string>ObjectObserver_Demo</string>
 	<key>IDESourceControlProjectOriginsDictionary</key>
 	<dict>
 		<key>FA60D4CF58068A99B4B8F5B47565030D9F962013</key>
 		<string>https://github.com/Leii/ObjectObserver_Demo.git</string>
 	</dict>
 	<key>IDESourceControlProjectPath</key>
-	<string>ObjectObserver_Demo.xcodeproj/project.xcworkspace</string>
+	<string>ObjectObserver_Demo.xcodeproj</string>
 	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
 	<dict>
 		<key>FA60D4CF58068A99B4B8F5B47565030D9F962013</key>

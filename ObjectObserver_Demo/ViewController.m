@@ -11,8 +11,8 @@
 
 @interface TestClass : NSObject
 
-@property(nonatomic)NSString *name;
-@property(nonatomic)NSNumber *number;
+@property (nonatomic, copy) NSString *name;
+@property (nonatomic) NSNumber *number;
 
 @end
 
@@ -22,7 +22,7 @@
 
 @interface ViewController ()
 
-@property(nonatomic)TestClass *testObject;
+@property (nonatomic) TestClass *testObject;
 
 @end
 
@@ -39,19 +39,30 @@
     NSLog(@"The property '%@' is changed from %@ to %@",observedKey,oldValue,newValue);
     }];
     
-    UIButton * button = [UIButton buttonWithType:UIButtonTypeRoundedRect];
-    [button setFrame:CGRectMake(self.view.frame.size.width/2-60, self.view.frame.size.height/2-25, 120, 50)];
-    [button setTitle:@"ChangeValues" forState:UIControlStateNormal];
-    [button addTarget:self action:@selector(changeValues) forControlEvents:UIControlEventTouchUpInside];
+    UIButton * nameButton = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+    [nameButton setFrame:CGRectMake(self.view.frame.size.width/2-60, self.view.frame.size.height/2-80, 120, 50)];
+    [nameButton setTitle:@"ChangeName" forState:UIControlStateNormal];
+    [nameButton setTag:0];
+    [nameButton addTarget:self action:@selector(changeValues:) forControlEvents:UIControlEventTouchUpInside];
     
-    [self.view addSubview:button];
+    UIButton * numberButton = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+    [numberButton setFrame:CGRectMake(self.view.frame.size.width/2-60, self.view.frame.size.height/2-15, 120, 50)];
+    [numberButton setTitle:@"ChangeNumber" forState:UIControlStateNormal];
+    [numberButton setTag:1];
+    [numberButton addTarget:self action:@selector(changeValues:) forControlEvents:UIControlEventTouchUpInside];
+
+    [self.view addSubview:nameButton];
+    [self.view addSubview:numberButton];
     
 }
 
--(void)changeValues {
-    self.testObject.name = [self.testObject.name stringByAppendingString:@"i"];
-    int num = arc4random()%12+1;
-    self.testObject.number = [NSNumber numberWithInt:num];
+-(void)changeValues:(id)sender{
+    if ([sender tag] == 0) {
+        self.testObject.name = [self.testObject.name stringByAppendingString:@"i"];
+    }else if([sender tag] == 1){
+        int num = arc4random()%12+1;
+        self.testObject.number = [NSNumber numberWithInt:num];
+    }
 }
 
 - (void)didReceiveMemoryWarning {
